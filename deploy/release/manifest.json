@@ -1,0 +1,22 @@
+[
+  {
+    "allowedMemberTypes": [
+      "Application"
+    ],
+    "description": "Writers are allowed use read and write operations.",
+    "displayName": "Api.Writer",
+    "isEnabled": "true",
+    "origin": "Application",
+    "value": "Api.Writer"
+  },
+  {
+    "allowedMemberTypes": [
+      "Application"
+    ],
+    "description": "Read operations allowed.",
+    "displayName": "Api.Reader",
+    "isEnabled": "true",
+    "origin": "Application",
+    "value": "Api.Reader"
+  }
+]
