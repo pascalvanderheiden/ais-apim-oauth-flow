@@ -9,7 +9,7 @@ I receive a lot of questions around this topic. That's why I thought, well maybe
 
 I've split the deployment in 2 parts, a build script and a release script. The build script basically deploys the cloud infrastructure, and the release script deploys the API and the related Azure AD components, like App Registrations, Service Principals, App Roles. So everything that is related to the API and it's policy.
 
-You can deploy it via GitHub Actions (work in progress) and manually via [manual-deploy.ps1](deploy/manual-deploy.ps1).
+You can deploy it via GitHub Actions and manually via [manual-deploy.ps1](deploy/manual-deploy.ps1).
 
 I found some articles very usefull when creating this repository. [This](https://docs.microsoft.com/en-us/azure/healthcare-apis/register-application-cli-rest) is a nice example on how to create a App Registration via the Az Cli.
 I wan't that familiar with jmespath for defining my queries in my az commands, and [this](https://www.azurecitadel.com/cli/jmespath/) article really helped. 
@@ -82,7 +82,7 @@ If you deleted the deployment via the Azure Portal, and you want to run this dep
 
 I've included a [tests.http](tests.http) file with relevant tests you can perform, to check if your deployment is successful.
 
-## Deploy with Github Actions (work in progress)
+## Deploy with Github Actions
 
 * Fork this repository
 

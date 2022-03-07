@@ -1,0 +1,159 @@
+name: Release
+
+env:
+  # deploymentNameBuild: ${{ github.event.inputs.deploymentNameBuild }}
+  # location: ${{ github.event.inputs.location }}
+  resourceGroup: '${{ secrets.PREFIX }}-rg'
+  releaseBicepPath: './deploy/release/ais-deploy-api.bicep'
+  appInsightsName: '${{ secrets.PREFIX }}-ai'
+  appRegProvider: '${{ secrets.PREFIX }}-provider'
+  appRegReader: '${{ secrets.PREFIX }}-consumer-reader'
+  appRoleReader: 'Api.Reader'
+  appRoleWriter: 'Api.Writer'
+  appRegWriter: '${{ secrets.PREFIX }}-consumer-writer'
+
+on:
+  # Only trigger, when the build workflow succeeded
+  workflow_run:
+    workflows: ["Build"]
+    types:
+      - completed
+
+  # Allows you to run this workflow manually from the Actions tab
+  # workflow_dispatch:
+  #   inputs:
+  #     deploymentNameBuild:
+  #       description: 'Deployment Name Build'     
+  #       required: true
+  #     location:
+  #       description: 'Location for deployment'     
+  #       required: true
+
+# A workflow run is made up of one or more jobs that can run sequentially or in parallel
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+
+      # LOGIN TO AZURE. THE LOGGED IN SESSION IS ACTIVE TILL A LOGOUT ACTION IS CALLED (OR THE JOB FINISHED)
+      - uses: azure/login@v1
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+          enable-AzPSSession: true 
+
+      # SET CORRECT AZURE CONTEXT
+      - name: 'Set context to subscription'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Set-AzContext -Subscription ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+          azPSVersion: "latest"
+
+      # CREATE PROVIDER APP REGISTRATION & APP ROLES
+      - name: 'Create App Registrations and App Roles'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Write-Host "Provider"
+            $appIdProvider = az ad app list --display-name ${{ env.appRegProvider }} --query [].appId --output tsv
+            if ($appIdProvider) { 
+                Write-Host "AppId Provider present."
+                $ObjectIdProviderSP=(az ad sp list --display-name ${{ env.appRegProvider }} --query [].objectId --output tsv) 
+            } else 
+            { 
+                $appNameProvider = ${{ env.appRegProvider }}
+                $identifierUriProvider = "api://${{ env.appRegProvider }}"
+                $appRegistrationProvider = az ad app create --display-name $appNameProvider --identifier-uris $identifierUriProvider --app-roles .\deploy\release\manifest.json
+                $appProvider = $appRegistrationProvider | ConvertFrom-Json
+                $appIdProvider = $appProvider.appId
+                $ObjectIdProviderSP=(az ad sp create --id $appIdProvider --query objectId --output tsv) 
+            }
+            Write-Host "App Id Provider: "$appIdProvider
+            echo "appIdProvider=$appIdProvider" >> $Env:GITHUB_ENV
+            Write-Host "Object Id Service Principal: "$ObjectIdProviderSP
+            echo "ObjectIdProviderSP=$ObjectIdProviderSP" >> $Env:GITHUB_ENV
+            $ObjectIdRoleReader = az ad app show --id $appIdProvider --query "appRoles[?value == '${appRoleReader}'].id" --output tsv
+            Write-Host "Object Id Role Reader: "$ObjectIdRoleReader
+            echo "ObjectIdRoleReader=$ObjectIdRoleReader" >> $Env:GITHUB_ENV
+            $ObjectIdRoleWriter = az ad app show --id $appIdProvider --query "appRoles[?value == '${appRoleWriter}'].id" --output tsv
+            Write-Host "Object Id Role Writer: "$ObjectIdRoleWriter
+            echo "ObjectIdRoleWriter=$ObjectIdRoleWriter" >> $Env:GITHUB_ENV
+          azPSVersion: "latest"
+
+      # CREATE READER APP REGISTRATION
+      - name: 'Create Reader App Registration'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Write-Host "Reader"
+            $ObjectIdReader = az ad app list --display-name ${{ env.appRegReader }} --query [].objectId --output tsv
+            if ($ObjectIdReader) {
+                Write-Host "Object Id Reader present."
+            } else 
+            {
+                $appNameReader = ${{ env.appRegReader }}
+                $identifierUriReader = "api://${{ env.appRegReader }}"
+                $appRegistrationReader = az ad app create --display-name $appNameReader --identifier-uris $identifierUriReader --password ${{ env.APPREG_READER_PWD }} --credential-description 'api'
+                $appReader = $appRegistrationReader | ConvertFrom-Json
+                $ObjectIdReader = $appReader.objectId
+            }
+            Write-Host "Object Id Reader: "$ObjectIdReader
+            echo "ObjectIdReader=$ObjectIdReader" >> $Env:GITHUB_ENV
+          azPSVersion: "latest"
+
+      # CREATE WRITER APP REGISTRATION
+      - name: 'Create Writer App Registration'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Write-Host "Writer"
+            $ObjectIdWriter = az ad app list --display-name ${{ env.appRegWriter }} --query [].objectId --output tsv
+            if ($ObjectIdWriter) {
+                Write-Host "Object Id Writer present."
+            } else 
+            {
+                $appNameWriter = ${{ env.appRegWriter }}
+                $identifierUriWriter = "api://${{ env.appRegWriter }}"
+                $appRegistrationWriter = az ad app create --display-name $appNameWriter --identifier-uris $identifierUriWriter --password ${{ env.APPREG_WRITER_PWD }} --credential-description 'api'
+                $appWriter = $appRegistrationWriter | ConvertFrom-Json
+                $ObjectIdWriter = $appWriter.objectId
+            }
+            Write-Host "Object Id Writer: "$ObjectIdWriter
+            echo "ObjectIdWriter=$ObjectIdWriter" >> $Env:GITHUB_ENV
+          azPSVersion: "latest"
+
+      # GET APIM INSTANCE NAME
+      - name: 'Retrieve API Management Instance Name'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            $apimName = az apim list --resource-group '${{ env.resourceGroup }}' --subscription '${{ secrets.AZURE_SUBSCRIPTION_ID }}' --query '[].{Name:name}' -o tsv
+            echo "APIM_NAME=$apimName" >> $Env:GITHUB_ENV
+          azPSVersion: "latest"
+
+      # DEPLOY API TO API MANAGEMENT
+      - name: 'Deploy API definition to API Management'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            New-AzResourceGroupDeployment -Name '${{ secrets.DEPLOYMENT_NAME_RELEASE }}' -ResourceGroupName '${{ env.resourceGroup }}' -apimName '${{ env.APIM_NAME }}' -appInsightsName '${{ env.appInsightsName }}' -tenantId '${{ secrets.AZURE_TENANT_ID}}' -providerAppId '${{ env.appIdProvider }}' -appRoleReader '${{ env.appRoleReader }}' -appRoleWriter '${{ env.appRoleWriter }}' -apiName '${{ secrets.API_NAME }}' -apiPath '${{ secrets.API_PATH }}' -TemplateFile '${{ env.releaseBicepPath }}'
+          azPSVersion: "latest"
+
+      # ASSIGN APP ROLES TO APP REGISTRATIONS
+      - name: 'Assign App Roles to Reader and Writer App Registrations'
+        uses: azure/powershell@v1
+        with:
+          inlineScript: |
+            Write-Host "Assign roles to App Registrations"
+            Install-Module AzureAD
+            Import-Module AzureAD
+            Connect-AzureAD -TenantId '${{ secrets.AZURE_TENANT_ID}}'
+            New-AzureADServiceAppRoleAssignment -ObjectId '${{ env.ObjectIdReader }}' -Id '${{ env.ObjectIdRoleReader }}' -PrincipalId '${{ env.ObjectIdReader }}' -ResourceId '${{ env.ObjectIdProviderSP }}'
+            New-AzureADServiceAppRoleAssignment -ObjectId '${{ env.ObjectIdWriter }}' -Id '${{ env.ObjectIdRoleWriter }}' -PrincipalId '${{ env.ObjectIdWriter }}' -ResourceId '${{ env.ObjectIdProviderSP }}'
+          azPSVersion: "latest"
+
+      # LOGOUT
+      - name: logout
+        run: |
+          az logout
