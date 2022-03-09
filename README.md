@@ -91,7 +91,7 @@ I've included a [tests.http](tests.http) file with relevant tests you can perfor
 * Generate a Service Principal
 
 ```ps1
-az ad sp create-for-rbac -n <name_sp> --role Contributor --sdk-auth
+az ad sp create-for-rbac -n <name_sp> --role Owner --sdk-auth
 ```
 
 Copy the json output of this command.

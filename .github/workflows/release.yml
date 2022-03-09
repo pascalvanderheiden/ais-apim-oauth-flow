@@ -64,7 +64,7 @@ jobs:
             { 
                 $appNameProvider = '${{ env.appRegProvider }}'
                 $identifierUriProvider = 'api://${{ env.appRegProvider }}'
-                $appRegistrationProvider = az ad app create --display-name $appNameProvider --identifier-uris $identifierUriProvider --app-roles .\deploy\release\manifest.json
+                $appRegistrationProvider = az ad app create --display-name $appNameProvider --identifier-uris $identifierUriProvider --app-roles '.\deploy\release\manifest.json'
                 $appProvider = $appRegistrationProvider | ConvertFrom-Json
                 $appIdProvider = '$appProvider.appId'
                 $ObjectIdProviderSP=(az ad sp create --id $appIdProvider --query objectId --output tsv) 
