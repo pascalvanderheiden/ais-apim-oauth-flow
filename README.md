@@ -12,7 +12,9 @@ I've split the deployment in 2 parts, a build script and a release script. The b
 You can deploy it via GitHub Actions and manually via [manual-deploy.ps1](deploy/manual-deploy.ps1).
 
 I found some articles very usefull when creating this repository. [This](https://docs.microsoft.com/en-us/azure/healthcare-apis/register-application-cli-rest) is a nice example on how to create a App Registration via the Az Cli.
-I wan't that familiar with jmespath for defining my queries in my az commands, and [this](https://www.azurecitadel.com/cli/jmespath/) article really helped. 
+I wasn't that familiar with jmespath for defining my queries in my az commands, and [this](https://www.azurecitadel.com/cli/jmespath/) article really helped.
+
+I've included the Open ID Connect config in my JWT validation as well. This is optional but very recommmended, as with rule will enforce validation at Azure AD. This [link](https://techcommunity.microsoft.com/t5/azure-paas-blog/restricting-api-management-access-to-users-through-aad/ba-p/2116259) show where you can see that in the trace.
 
 ## Architecture
 
@@ -112,6 +114,6 @@ The following secrets need to be created:
 * APPREG_READER_PWD
 * APPREG_WRITER_PWD
 
-### Commit
+### Trigger
 
-Commit the changes, and this will trigger the CI Build Pipeline.
+You can trigger the GitHub Build Action from GitHub manually, this will trigger the Release Action as well. I've you want to implement CI-CD, just check the section in the GitHub Action that I've commented out.

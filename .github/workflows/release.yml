@@ -62,21 +62,21 @@ jobs:
                 $ObjectIdProviderSP=(az ad sp list --display-name ${{ env.appRegProvider }} --query [].objectId --output tsv) 
             } else 
             { 
-                $appNameProvider = ${{ env.appRegProvider }}
-                $identifierUriProvider = "api://${{ env.appRegProvider }}"
+                $appNameProvider = '${{ env.appRegProvider }}'
+                $identifierUriProvider = 'api://${{ env.appRegProvider }}'
                 $appRegistrationProvider = az ad app create --display-name $appNameProvider --identifier-uris $identifierUriProvider --app-roles .\deploy\release\manifest.json
                 $appProvider = $appRegistrationProvider | ConvertFrom-Json
-                $appIdProvider = $appProvider.appId
+                $appIdProvider = '$appProvider.appId'
                 $ObjectIdProviderSP=(az ad sp create --id $appIdProvider --query objectId --output tsv) 
             }
             Write-Host "App Id Provider: "$appIdProvider
             echo "appIdProvider=$appIdProvider" >> $Env:GITHUB_ENV
             Write-Host "Object Id Service Principal: "$ObjectIdProviderSP
             echo "ObjectIdProviderSP=$ObjectIdProviderSP" >> $Env:GITHUB_ENV
-            $ObjectIdRoleReader = az ad app show --id $appIdProvider --query "appRoles[?value == '${appRoleReader}'].id" --output tsv
+            $ObjectIdRoleReader = az ad app show --id $appIdProvider --query "appRoles[?value == '${{ env.appRoleReader }}'].id" --output tsv
             Write-Host "Object Id Role Reader: "$ObjectIdRoleReader
             echo "ObjectIdRoleReader=$ObjectIdRoleReader" >> $Env:GITHUB_ENV
-            $ObjectIdRoleWriter = az ad app show --id $appIdProvider --query "appRoles[?value == '${appRoleWriter}'].id" --output tsv
+            $ObjectIdRoleWriter = az ad app show --id $appIdProvider --query "appRoles[?value == '${{ env.appRoleWriter }}'].id" --output tsv
             Write-Host "Object Id Role Writer: "$ObjectIdRoleWriter
             echo "ObjectIdRoleWriter=$ObjectIdRoleWriter" >> $Env:GITHUB_ENV
           azPSVersion: "latest"
@@ -87,14 +87,14 @@ jobs:
         with:
           inlineScript: |
             Write-Host "Reader"
-            $ObjectIdReader = az ad app list --display-name ${{ env.appRegReader }} --query [].objectId --output tsv
+            $ObjectIdReader = az ad app list --display-name '${{ env.appRegReader }}' --query [].objectId --output tsv
             if ($ObjectIdReader) {
                 Write-Host "Object Id Reader present."
             } else 
             {
-                $appNameReader = ${{ env.appRegReader }}
-                $identifierUriReader = "api://${{ env.appRegReader }}"
-                $appRegistrationReader = az ad app create --display-name $appNameReader --identifier-uris $identifierUriReader --password ${{ env.APPREG_READER_PWD }} --credential-description 'api'
+                $appNameReader = '${{ env.appRegReader }}'
+                $identifierUriReader = 'api://${{ env.appRegReader }}'
+                $appRegistrationReader = az ad app create --display-name $appNameReader --identifier-uris $identifierUriReader --password '${{ env.APPREG_READER_PWD }}' --credential-description 'api'
                 $appReader = $appRegistrationReader | ConvertFrom-Json
                 $ObjectIdReader = $appReader.objectId
             }
@@ -108,14 +108,14 @@ jobs:
         with:
           inlineScript: |
             Write-Host "Writer"
-            $ObjectIdWriter = az ad app list --display-name ${{ env.appRegWriter }} --query [].objectId --output tsv
+            $ObjectIdWriter = az ad app list --display-name '${{ env.appRegWriter }}' --query [].objectId --output tsv
             if ($ObjectIdWriter) {
                 Write-Host "Object Id Writer present."
             } else 
             {
-                $appNameWriter = ${{ env.appRegWriter }}
-                $identifierUriWriter = "api://${{ env.appRegWriter }}"
-                $appRegistrationWriter = az ad app create --display-name $appNameWriter --identifier-uris $identifierUriWriter --password ${{ env.APPREG_WRITER_PWD }} --credential-description 'api'
+                $appNameWriter = '${{ env.appRegWriter }}'
+                $identifierUriWriter = 'api://${{ env.appRegWriter }}'
+                $appRegistrationWriter = az ad app create --display-name $appNameWriter --identifier-uris $identifierUriWriter --password '${{ env.APPREG_WRITER_PWD }}' --credential-description 'api'
                 $appWriter = $appRegistrationWriter | ConvertFrom-Json
                 $ObjectIdWriter = $appWriter.objectId
             }
