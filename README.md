@@ -3,6 +3,11 @@ OAuth flow with Azure AD and Azure API Management explained and deployed.
 
 ## Build Status
 
+| GitHub Action | Status |
+| ----------- | ----------- |
+| Build | [![Build](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/build.yml) |
+| Release | [![Release](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/release.yml/badge.svg)](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/release.yml) |
+
 ## About
 
 I receive a lot of questions around this topic. That's why I thought, well maybe it's a good idea to script the architecture mentioned [here](https://docs.microsoft.com/en-us/azure/api-management/api-management-howto-protect-backend-with-aad) so you can try it out yourself. I learn by doing, and hopefully, so do you.
