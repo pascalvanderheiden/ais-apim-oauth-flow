@@ -21,6 +21,9 @@ I wasn't that familiar with jmespath for defining my queries in my az commands, 
 
 I've included the Open ID Connect config in my JWT validation as well. This is optional but very recommmended, as with rule will enforce validation at Azure AD. This [link](https://techcommunity.microsoft.com/t5/azure-paas-blog/restricting-api-management-access-to-users-through-aad/ba-p/2116259) show where you can see that in the trace.
 
+Creating App Registrations with a Deployment Service Principal is a tricky part. If you are not a administrator on the Azure AD Tenant, you will not be able to create App Registration or do any App Role assignment. See [this link](https://docs.microsoft.com/en-us/azure/role-based-access-control/role-assignments-steps#step-4-check-your-prerequisites) for more info. I ran into this issue when I wanted to create the App Registrations via GitHub Actions. So, that's I why I created a seperate [PowerShell script](./deploy/release/release-appreg-api.ps1) for creating the App Registration and deploying the API manually from the Cloud Shell.
+>You can't use the your local PowerShell Terminal, as the 'Connect-AzureAD' for Role Assignment won't connect due to background authentication. It will timeout at one point!
+
 ## Architecture
 
 ![ais-apim-oauth-flow](docs/images/arch.png)
@@ -67,8 +70,8 @@ $deploymentNameRelease = "<deployment_name_release>"
 $namePrefix = "<project_prefix>"
 $apiName = "<api_name>" # Note: don't use any spaces.
 $apiPath = "<api_path>"
-$appReaderPassword = "<secret_for_app_reg_reader>" # Note: min. 8 char with capital,number,symbol.
-$appWriterPassword = "<secret_for_app_reg_writer>" # Note: min. 8 char with capital,number,symbol.
+$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
+$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
 # For removing soft-delete
 $apimName = "<apim_name>"
 ```
@@ -96,7 +99,7 @@ I've included a [tests.http](tests.http) file with relevant tests you can perfor
 * Generate a Service Principal
 
 ```ps1
-az ad sp create-for-rbac -n <name_sp> --role Owner --sdk-auth
+az ad sp create-for-rbac -n <name_sp> --role Contributor --sdk-auth
 ```
 
 Copy the json output of this command.
@@ -109,15 +112,41 @@ And pass the json output in the command used above into the secret 'AZURE_CREDEN
 The following secrets need to be created:
 
 * AZURE_SUBSCRIPTION_ID
-* AZURE_TENANT_ID
 * LOCATION
-* DEPLOYMENT_NAME_BUILD
-* DEPLOYMENT_NAME_RELEASE
 * PREFIX
+* DEPLOYMENT_NAME_BUILD
+* AZURE_TENANT_ID
+
+Additional for the Release GitHub Action:
+
+* DEPLOYMENT_NAME_RELEASE
 * API_NAME
 * API_PATH
 * APPREG_READER_PWD
 * APPREG_WRITER_PWD
+
+* Create the App Registrations and Release the API to API Management
+
+As mentioned in the introduction, creating the App Registrations and assigning roles requires more rights. If you don't have this, run this manualy in PowerShell:
+
+```ps1
+$subscriptionId = "<subscription_id>"
+$tenantId = "<tenant_id>"
+$deploymentNameRelease = "<deployment_name_release>"
+$namePrefix = "<project_prefix>"
+$apiName = "<api_name>" # Note: don't use any spaces.
+$apiPath = "<api_path>"
+$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
+$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
+```
+
+```ps1
+.\deploy\release\release-appreg-api.ps1 -subscriptionId $subscriptionId -tenantId $tenantId -deploymentNameRelease $deploymentNameRelease -namePrefix $namePrefix -apiName $apiName -apiPath $apiPath -appReaderPassword $appReaderPassword -appWriterPassword $appWriterPassword
+```
+
+* GitHub Action for Release
+
+I've included a [GitHub Release Pipeline](.\.github\release.yml) if you do have the appropiate rights.
 
 ### Trigger
 
