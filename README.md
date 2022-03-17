@@ -6,7 +6,6 @@ OAuth flow with Azure AD and Azure API Management explained and deployed.
 | GitHub Action | Status |
 | ----------- | ----------- |
 | Build | [![Build](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/build.yml/badge.svg?branch=main)](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/build.yml) |
-| Release | [![Release](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/release.yml/badge.svg)](https://github.com/pascalvanderheiden/ais-apim-oauth-flow/actions/workflows/release.yml) |
 
 ## About
 
