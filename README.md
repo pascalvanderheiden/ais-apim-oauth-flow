@@ -69,8 +69,8 @@ $deploymentNameRelease = "<deployment_name_release>"
 $namePrefix = "<project_prefix>"
 $apiName = "<api_name>" # Note: don't use any spaces.
 $apiPath = "<api_path>"
-$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
-$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
+$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" -asplaintext -force # Note: min. 16 char with capital,number,symbol.
+$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" -asplaintext -force # Note: min. 16 char with capital,number,symbol.
 # For removing soft-delete
 $apimName = "<apim_name>"
 ```
@@ -135,8 +135,8 @@ $deploymentNameRelease = "<deployment_name_release>"
 $namePrefix = "<project_prefix>"
 $apiName = "<api_name>" # Note: don't use any spaces.
 $apiPath = "<api_path>"
-$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
-$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" # Note: min. 16 char with capital,number,symbol.-asplaintext -force
+$appReaderPassword = convertto-securestring "<secret_for_app_reg_reader>" -asplaintext -force # Note: min. 16 char with capital,number,symbol.
+$appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" -asplaintext -force # Note: min. 16 char with capital,number,symbol.
 ```
 
 ```ps1
@@ -145,7 +145,7 @@ $appWriterPassword = convertto-securestring "<secret_for_app_reg_writer>" # Note
 
 * GitHub Action for Release
 
-I've included a [GitHub Release Pipeline](.\.github\release.yml) if you do have the appropiate rights.
+I've included a GitHub Release Pipeline] if you do have the appropiate rights.
 
 ### Trigger
 
